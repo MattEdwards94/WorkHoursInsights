@@ -1,6 +1,8 @@
 from datetime import datetime as dtime
 from datetime import timedelta
 import json
+import csv
+import itertools
 
 
 class DayHours():
@@ -80,23 +82,22 @@ def parse_work_json_data(filename):
     """Parses the specified JSON file to gather the various start and end times.
 
     Required format:
-        "data": [
-            {
-                "date": "dd/mm/yyyy"
-                "start": "hh:mm"
-                "end": "hh:mm"
-                "lunch_start": (optional): "hh:mm"
-                "lunch_end": (optional): "hh:mm"
-            },
-            {
-                "date": "dd/mm/yyyy"
-                "start": "hh:mm"
-                "end": "hh:mm"
-                "lunch_start": (optional): "hh:mm"
-                "lunch_end": (optional): "hh:mm"
-            },
-            ...
-        ]
+        {
+            "date": "dd/mm/yyyy"
+            "start": "hh:mm"
+            "end": "hh:mm"
+            "lunch_start": (optional): "hh:mm"
+            "lunch_end": (optional): "hh:mm"
+        },
+        {
+            "date": "dd/mm/yyyy"
+            "start": "hh:mm"
+            "end": "hh:mm"
+            "lunch_start": (optional): "hh:mm"
+            "lunch_end": (optional): "hh:mm"
+        },
+        ...
+
 
 
     Arguments:
@@ -112,16 +113,76 @@ def parse_work_json_data(filename):
 
     # convert dictionary data into more convenient form
     all_days = []
-    for day in raw_data["data"]:
+    for day in raw_data:
         all_days.append(DayHours(day))
 
     return all_days
 
 
-if __name__ == "__main__":
-    data = parse_work_json_data('mock_data.json')
+def parse_csv_data(csv_file_in, file_out):
+    """Quick script to extract all the data presently stored in a csv file,
+    and format into more useable json file.
 
-    for day in data:
-        print(day.date)
-        print(day.lunch_duration())
-        print(day.work_hours())
+    writes the output json to 'file_out'
+
+    Example csv file:
+    June 19, 2018 at 09:32AM, entered, 43270, 9, 32, Work Start, Tuesday
+    June 19, 2018 at 12:34PM, exited, 43270, 12, 34, Lunch Start, Tuesday
+    June 19, 2018 at 01:55PM, entered, 43270, 13, 55, Lunch End, Tuesday
+    June 19, 2018 at 06:50PM, exited, 43270, 18, 50, Work End, Tuesday
+
+    """
+    dict_list = []
+
+    with open(csv_file_in) as xls_file:
+        xls_data = csv.reader(xls_file)
+        t_start, t_l_start, t_l_end, t_end = None, None, None, None
+
+        for row in itertools.islice(xls_data, 0, 12):
+            # get the date from the datevalue
+            date = (dtime(1899, 12, 30)
+                    + timedelta(days=int(row[4]))).date()
+            time = dtime(1900, 1, 1, hour=int(
+                row[5]), minute=int(row[6])).time()
+            if row[7] == "Work Start":
+                t_start = time
+            elif row[7] == "Lunch Start":
+                t_l_start = time
+            elif row[7] == "Lunch End":
+                t_l_end = time
+            else:
+                # Work end:
+                t_end = time
+
+                # construct dict
+                t_dict = {"date": date.strftime("%d/%m/%Y"),
+                          "start": t_start.strftime("%H:%M"),
+                          "end": t_end.strftime("%H:%M"), }
+                if t_l_start is not None:
+                    t_dict["lunch_start"] = t_l_start.strftime("%H:%M")
+                if t_l_end is not None:
+                    t_dict["lunch_end"] = t_l_end.strftime("%H:%M")
+                print(t_dict)
+                dict_list.append(t_dict)
+                # reset values for next 'day'
+                t_start, t_l_start, t_l_end, t_end = None, None, None, None
+                t_dict = None
+
+    # now we need to export the list of dh objects into a json file
+    with open(file_out, 'w') as out_file:
+        json.dump(dict_list, out_file)
+
+
+if __name__ == "__main__":
+    # data = parse_work_json_data('mock_data.json')
+
+    # for day in data:
+    #     print(day.date)
+    #     print(day.lunch_duration())
+    #     print(day.work_hours())
+
+    parse_csv_data('work_hours.csv', 'all_data.json')
+    all_days = parse_work_json_data('all_data.json')
+
+    for dh in all_days:
+        print(dh.work_hours())

@@ -66,3 +66,8 @@ target/
 #profiling files
 *.prof
 *.lprof
+
+
+# my data file
+all_data.json
+work_hours.csv
