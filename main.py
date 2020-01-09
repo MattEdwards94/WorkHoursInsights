@@ -53,9 +53,15 @@ class WorkDay():
                     raise ValueError("Lunch ended before it started")
                 if self.lunch_end > self.end:
                     raise ValueError("Lunch ended after the day ended")
+    
+    def __str__(self):
+        out = f"On {self.date}, you started work at {self.start.time()} and " 
+        out += f"worked for {self.work_hours()}hrs and had "
+        out += f"{self.lunch_duration()}hrs for lunch."
+        return out
 
     def lunch_duration(self):
-        """Return the length of the lunch break for the day
+        """Return the length of the lunch break for the day as a timedelta
         """
         if self.lunch_start is None:
             return timedelta(seconds=0)
@@ -185,4 +191,4 @@ if __name__ == "__main__":
     all_days = parse_work_json_data('all_data.json')
 
     for dh in all_days:
-        print(dh.work_hours())
+        print(dh)
