@@ -5,16 +5,9 @@ import csv
 import itertools
 
 
-class DayHours():
-    def __init__(self, time_dict):
-        """Initialises a 'DayHours' object from dictionary based data
-
-        Required format:
-            date: dd/mm/yyyy
-            start: hh:mm
-            end: hh:mm
-            lunch_start (optional): hh:mm
-            lunch_end (optional): hh:mm
+class WorkDay():
+    def __init__(self, date, start, end, lunch_start_end=None):
+        """Initialises a 'WorkDay' object to track working hours
 
         Checks the validity of the times:
                 start < end
@@ -22,47 +15,44 @@ class DayHours():
                 lunch start < end
                 lunch end > lunch start
                 lunch end < end
+        
+        Arguments:
+            date {datetime.date}: The date of the day being considered
+            start {datetime.time}: The time of day that work started
+            end {datetime.time}: The time of day that work ended
+                                   Must be after the start time
+            lunch_start_end {tuple, datetime.time}: Contains both the start
+                                                    and end times for lunch
+                                                    if desired. Must be entirely
+                                                    within the day start and end 
+                                                    times for the day, and the
+                                                    lunch end must come after 
+                                                    the lunch start                                                     
         """
-
-        self.date = dtime.strptime(time_dict['date'], "%d/%m/%Y").date()
-        self.start = dtime.strptime(time_dict['start'], "%H:%M")
-        self.end = dtime.strptime(time_dict['end'], "%H:%M")
-
-        # attempt to parse lunch data. If no lunch start time is given, then we
-        # don't require an end either.
-        # Yet if one but not the other is given, this should raise an error
-        try:
-            self.lunch_start = dtime.strptime(time_dict['lunch_start'],
-                                              "%H:%M")
-        except KeyError:
-            self.lunch_start = None
-
-        try:
-            self.lunch_end = dtime.strptime(time_dict['lunch_end'],
-                                            "%H:%M")
-            # upon succesful parsing of lunch end, we should check if we
-            # have a lunch start
-            if self.lunch_start is None:
-                raise KeyError("Lunch end found, but no lunch start")
-        except KeyError:
-            if self.lunch_start is not None:
-                # there is a start, but no end
-                raise KeyError("Lunch end not found")
-            # otherwise, they both don't exist so just continue.
-
-        # Now we need to check the times are valid and make sense
-        if self.start > self.end:
-            raise ValueError("Day ended before it started")
-
-        if self.lunch_start is not None:
-            if self.lunch_start < self.start:
-                raise ValueError("Lunch started before day started")
-            if self.lunch_start > self.end:
-                raise ValueError("Lunch started after day ended")
-            if self.lunch_end < self.lunch_start:
-                raise ValueError("Lunch ended before it started")
-            if self.lunch_end > self.end:
-                raise ValueError("Lunch ended after the day ended")
+        
+        # note no input checking.
+        self.date = date
+        self.start = dtime.combine(self.date, start)
+        if end > start:
+            self.end = dtime.combine(self.date, end)
+        else:
+            raise ValueError("End must come after start")
+        
+        self.lunch_start, self.lunch_end = None, None
+        if lunch_start_end is not None:
+            if not len(lunch_start_end) == 2:
+                raise ValueError("Both lunch start and end must be specified")
+            else:
+                self.lunch_start = dtime.combine(self.date, lunch_start_end[0])
+                self.lunch_end = dtime.combine(self.date, lunch_start_end[1])
+                if self.lunch_start < self.start:
+                    raise ValueError("Lunch started before day started")
+                if self.lunch_start > self.end:
+                    raise ValueError("Lunch started after day ended")
+                if self.lunch_end < self.lunch_start:
+                    raise ValueError("Lunch ended before it started")
+                if self.lunch_end > self.end:
+                    raise ValueError("Lunch ended after the day ended")
 
     def lunch_duration(self):
         """Return the length of the lunch break for the day
@@ -105,7 +95,7 @@ def parse_work_json_data(filename):
                              start and end times
 
     Returns:
-        all_days {list, DayHours} -- a list of DayHours objects
+        all_days {list, WorkDay} -- a list of WorkDay objects
     """
 
     with open(filename) as file:
@@ -114,7 +104,17 @@ def parse_work_json_data(filename):
     # convert dictionary data into more convenient form
     all_days = []
     for day in raw_data:
-        all_days.append(DayHours(day))
+        date = dtime.strptime(day['date'], "%d/%m/%Y").date()
+        start = dtime.strptime(day['start'], "%H:%M").time()
+        end = dtime.strptime(day['end'], "%H:%M").time()
+        try:
+            lunch_start = dtime.strptime(day['lunch_start'], "%H:%M").time()
+            lunch_end = dtime.strptime(day['lunch_end'], "%H:%M").time()
+            lunch_start_end = (lunch_start, lunch_end)
+        except KeyError:
+            lunch_start_end = None
+                   
+        all_days.append(WorkDay(date, start, end, lunch_start_end))
 
     return all_days
 
