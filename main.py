@@ -125,7 +125,7 @@ def parse_work_json_data(filename):
     return all_days
 
 
-def parse_csv_data(csv_file_in, file_out):
+def convert_csv_data_to_json(csv_file_in, file_out):
     """Quick script to extract all the data presently stored in a csv file,
     and format into more useable json file.
 
@@ -187,7 +187,7 @@ if __name__ == "__main__":
     #     print(day.lunch_duration())
     #     print(day.work_hours())
 
-    parse_csv_data('work_hours.csv', 'all_data.json')
+    convert_csv_data_to_json('work_hours.csv', 'all_data.json')
     all_days = parse_work_json_data('all_data.json')
 
     for dh in all_days:
