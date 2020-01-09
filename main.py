@@ -69,7 +69,8 @@ class WorkDay():
             return self.lunch_end - self.lunch_start
 
     def work_hours(self):
-        """Return the number of hours worked, accounting for lunch
+        """Return the number of hours worked, accounting for lunch, as a
+        timedelta
         """
         return self.end - self.start - self.lunch_duration()
 
