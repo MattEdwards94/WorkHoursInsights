@@ -144,7 +144,7 @@ def convert_csv_data_to_json(csv_file_in, file_out):
         xls_data = csv.reader(xls_file)
         t_start, t_l_start, t_l_end, t_end = None, None, None, None
 
-        for row in itertools.islice(xls_data, 0, 12):
+        for row in xls_data:
             # get the date from the datevalue
             date = (dtime(1899, 12, 30)
                     + timedelta(days=int(row[4]))).date()
@@ -168,7 +168,6 @@ def convert_csv_data_to_json(csv_file_in, file_out):
                     t_dict["lunch_start"] = t_l_start.strftime("%H:%M")
                 if t_l_end is not None:
                     t_dict["lunch_end"] = t_l_end.strftime("%H:%M")
-                print(t_dict)
                 dict_list.append(t_dict)
                 # reset values for next 'day'
                 t_start, t_l_start, t_l_end, t_end = None, None, None, None
