@@ -2,7 +2,6 @@ from datetime import datetime as dtime
 from datetime import timedelta
 import json
 import csv
-import itertools
 
 
 class WorkDay():
