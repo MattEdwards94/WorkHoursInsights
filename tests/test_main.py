@@ -99,7 +99,8 @@ def test_init_WorkDay_lunch_end_after_day_end():
 
 @pytest.fixture
 def mock_WorkDay():
-    """Creates a random piv Image
+    """Creates a mock WorkDay, representative of normal hours, to simplify 
+    testing. 
     """
     date = datetime.date(2020, 1, 7)
     start, end = datetime.time(9, 15), datetime.time(17, 30)
