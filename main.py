@@ -147,14 +147,14 @@ def convert_csv_data_to_json(csv_file_in, file_out):
         for row in xls_data:
             # get the date from the datevalue
             date = (dtime(1899, 12, 30)
-                    + timedelta(days=int(row[4]))).date()
+                    + timedelta(days=int(row[2]))).date()
             time = dtime(1900, 1, 1, hour=int(
-                row[5]), minute=int(row[6])).time()
-            if row[7] == "Work Start":
+                row[3]), minute=int(row[4])).time()
+            if row[5] == "Work Start":
                 t_start = time
-            elif row[7] == "Lunch Start":
+            elif row[5] == "Lunch Start":
                 t_l_start = time
-            elif row[7] == "Lunch End":
+            elif row[5] == "Lunch End":
                 t_l_end = time
             else:
                 # Work end:
