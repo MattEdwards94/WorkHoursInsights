@@ -74,6 +74,50 @@ class WorkDay():
         return self.end - self.start - self.lunch_duration()
 
 
+class WorkHistory():
+    def __init__(self, work_days, allowed_leave=None):
+        """Manages the full dataset of working hours and provides insights into 
+        aggregate data such as average working time, lunch time, etc  
+
+        Args:
+            work_days (WorkDay, list): List of WorkDay objects with the start
+                                      and end times for each day.
+            allows_leave (float): The number of days allocated for leave in a 
+                                  calendar year. This includes sick days.
+                                  Defaults to 38.5 which is equivalent to the 
+                                  national average of 33.5 days of annual leave
+                                  and 5 days of sick leave.
+        """
+
+        self.all_days = work_days
+
+        if allowed_leave is None:
+            self.allowed_leave = 38.5
+        else:
+            self.allowed_leave = allowed_leave
+
+    @property
+    def n_days(self):
+        """Gets the number of days worked
+        """
+        return len(self.all_days)
+
+    def average_work_duration(self):
+        """Return the simple average number of hours worked per day. That is, 
+        On all of the days worked, what was the average number of hours. 
+
+        This is susceptible to bias from e.g. half days or working a couple 
+        of hours on a weekend and so is a poor measure
+
+        """
+
+        tot_hours = timedelta(seconds=0)
+        for day in self.all_days:
+            tot_hours += day.work_hours()
+
+        return tot_hours / self.n_days
+
+
 def parse_work_json_data(filename):
     """Parses the specified JSON file to gather the various start and end times.
 
@@ -191,3 +235,6 @@ if __name__ == "__main__":
 
     for dh in all_days:
         print(dh)
+
+    work_hist = WorkHistory(all_days)
+    print(work_hist.average_work_duration())

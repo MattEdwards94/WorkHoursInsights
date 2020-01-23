@@ -133,6 +133,43 @@ def test_WorkDay_work_hours(mock_WorkDay):
     assert mock_WorkDay.work_hours() == exp_tdelta
 
 
+@pytest.fixture
+def mock_WorkHistory():
+    """Creates a few mock working days, and adds them to a mock 'WorkHistory' 
+    object for testing methods
+    """
+
+    day1 = main.WorkDay(datetime.date(2020, 1, 7),
+                        datetime.time(9, 15), datetime.time(17, 30),
+                        (datetime.time(12, 30), datetime.time(13, 30)))
+
+    day2 = main.WorkDay(datetime.date(2020, 1, 8),
+                        datetime.time(9, 00), datetime.time(17, 15),
+                        (datetime.time(12, 30), datetime.time(13, 30)))
+
+    day3 = main.WorkDay(datetime.date(2020, 1, 9),
+                        datetime.time(9, 5), datetime.time(18, 15),
+                        (datetime.time(11, 45), datetime.time(13, 00)))
+
+    return main.WorkHistory([day1, day2, day3])
 
 
-    
+def test_n_days_worked(mock_WorkHistory):
+    """Checks that the number of days worked is correct
+    """
+    assert mock_WorkHistory.n_days == 3
+
+
+def test_average_work_duration(mock_WorkHistory):
+    """`Check that the simple average of hours worked is valid. 
+
+    The simple average is the total hours divided by the number of days worked
+    """
+
+    # day1 work hours = 8h15 - 1h lunch
+    # day2 work hours = 8h15 - 1h lunch
+    # day3 work hours = 9h10 - 1h15 lunch
+    exp = (datetime.timedelta(hours=7, minutes=15) +
+           datetime.timedelta(hours=7, minutes=15) +
+           datetime.timedelta(hours=7, minutes=55)) / 3
+    assert mock_WorkHistory.average_work_duration() == exp
